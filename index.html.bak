@@ -1088,9 +1088,7 @@ function renderAll() {
   renderTasks(); updateHeader();
 }
 document.addEventListener('DOMContentLoaded', () => {
-  loadCollapsedState();
   restoreFromCloud().then(() => {
-    if (checkBirthday()) giveBirthdayBonus();
     renderAll();
   });
 });
