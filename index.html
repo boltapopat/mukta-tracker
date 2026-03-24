@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#7c3aed">
+<title>Mukta's Habit Tracker ⭐</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --purple:#7c3aed; --purple-light:#ede9fe; --purple-dark:#5b21b6;
+  --pink:#ec4899; --teal:#0d9488; --teal-light:#ccfbf1;
+  --amber:#f59e0b; --amber-light:#fef3c7;
+  --green:#16a34a; --green-light:#dcfce7;
+  --red:#dc2626; --gray:#6b7280; --gray-light:#f3f4f6;
+  --text:#1f2937; --text-muted:#6b7280;
+  --radius:16px; --shadow:0 4px 24px rgba(124,58,237,0.10);
+}
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:linear-gradient(135deg,#faf5ff 0%,#fce7f3 50%,#eff6ff 100%); min-height:100vh; color:var(--text); }
+.header { background:linear-gradient(135deg,var(--purple) 0%,var(--pink) 100%); color:white; padding:20px 20px 28px; position:sticky; top:0; z-index:100; box-shadow:0 4px 20px rgba(124,58,237,0.3); }
+.header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.header-title { font-size:20px; font-weight:700; }
+.header-subtitle { font-size:13px; opacity:0.85; margin-top:2px; }
+.header-date { font-size:12px; opacity:0.75; background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:20px; }
+.points-banner { background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.3); border-radius:14px; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+.points-value { font-size:32px; font-weight:800; line-height:1; }
+.progress-bar-wrap { width:120px; height:8px; background:rgba(255,255,255,0.25); border-radius:4px; overflow:hidden; }
+.progress-bar-fill { height:100%; background:white; border-radius:4px; transition:width 0.5s ease; }
+.nav { display:flex; background:white; border-bottom:1px solid #e5e7eb; position:sticky; top:128px; z-index:99; }
+.nav-tab { flex:1; padding:12px 8px; text-align:center; font-size:13px; font-weight:500; color:var(--gray); cursor:pointer; border-bottom:3px solid transparent; transition:all 0.2s; background:none; border-left:none; border-right:none; border-top:none; }
+.nav-tab.active { color:var(--purple); border-bottom-color:var(--purple); }
+.nav-tab-icon { font-size:18px; display:block; margin-bottom:2px; }
+.screen { display:none; padding:16px; padding-bottom:80px; }
+.screen.active { display:block; }
+.sec-hdr { font-size:13px; font-weight:600; color:var(--purple); text-transform:uppercase; letter-spacing:0.08em; margin:20px 0 10px; display:flex; align-items:center; gap:8px; }
+.category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin: 20px 0 10px;
+  user-select: none;
+}
+.category-header .sec-hdr {
+  margin: 0;
+}
+.category-toggle {
+  font-size: 14px;
+  background: none;
+  border: none;
+  color: var(--purple);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.category-toggle:hover {
+  background: var(--purple-light);
+}
+.category-content {
+  transition: all 0.2s ease;
+}
+.category-content.collapsed {
+  display: none;
+}
+.task-card { background:white; border-radius:var(--radius); padding:14px 16px; margin-bottom:10px; box-shadow:var(--shadow); display:flex; align-items:center; gap:14px; transition:all 0.2s; border:2px solid transparent; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent; }
+.task-card:active { transform:scale(0.98); }
+.task-card.done { background:var(--green-light); border-color:#86efac; opacity:0.85; }
+.task-card.done .task-name { text-decoration:line-through; color:var(--gray); }
+.task-icon { font-size:28px; min-width:36px; text-align:center; }
+.task-name { font-size:15px; font-weight:600; color:var(--text); line-height:1.3; }
+.task-meta { display:flex; gap:6px; align-items:center; margin-top:5px; flex-wrap:wrap; }
+.task-pts { font-size:12px; font-weight:700; color:var(--amber); background:var(--amber-light); padding:2px 8px; border-radius:20px; }
+.task-check { width:32px; height:32px; border-radius:50%; border:2.5px solid #d1d5db; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.25s; font-size:16px; background:white; }
+.task-card.done .task-check { background:var(--green); border-color:var(--green); color:white; }
+.reward-card { background:white; border-radius:var(--radius); padding:16px; margin-bottom:10px; box-shadow:var(--shadow); display:flex; align-items:center; gap:14px; border:2px solid transparent; }
+.reward-icon { font-size:32px; min-width:40px; text-align:center; }
+.reward-name { font-size:15px; font-weight:600; }
+.reward-desc { font-size:12px; color:var(--text-muted); margin-top:3px; }
+.reward-cost { font-size:13px; font-weight:700; color:var(--purple); background:var(--purple-light); padding:3px 10px; border-radius:20px; white-space:nowrap; }
+.redeem-btn { background:linear-gradient(135deg,var(--purple),var(--pink)); color:white; border:none; border-radius:10px; padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.redeem-btn:disabled { background:#d1d5db; cursor:not-allowed; opacity:0.7; }
+.history-item { background:white; border-radius:12px; padding:12px 16px; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; align-items:center; justify-content:space-between; }
+.toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text); color:white; padding:12px 22px; border-radius:50px; font-size:14px; font-weight:500; opacity:0; transition:all 0.3s ease; pointer-events:none; z-index:999; max-width:90vw; text-align:center; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.success { background:var(--green); }
+.toast.error { background:var(--red); }
+.toast.info { background:var(--purple); }
+.summary-card { background:linear-gradient(135deg,var(--purple) 0%,var(--pink) 100%); color:white; border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+.summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:12px; }
+.summary-stat { text-align:center; background:rgba(255,255,255,0.15); border-radius:10px; padding:10px 6px; }
+.day-pills { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px; scrollbar-width:none; }
+.day-pills::-webkit-scrollbar { display:none; }
+.day-pill { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 10px; border-radius:10px; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.08); min-width:40px; }
+.day-pill.today { background:var(--purple); color:white; }
+.day-pill.has-pts { border-bottom:3px solid var(--amber); }
+.info-card { background:white; border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); margin-bottom:12px; }
+.info-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f3f4f6; }
+.info-row:last-child { border-bottom:none; }
+.info-key { font-size:13px; color:var(--text-muted); }
+.info-val { font-size:13px; font-weight:600; }
+.ctrl-btn { width:100%; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:600; cursor:pointer; margin-top:8px; color:white; }
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:500; display:flex; align-items:flex-end; opacity:0; pointer-events:none; transition:opacity 0.25s; }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal { background:white; border-radius:24px 24px 0 0; padding:24px 20px 40px; width:100%; transform:translateY(100%); transition:transform 0.3s ease; }
+.modal-overlay.open .modal { transform:translateY(0); }
+.modal-handle { width:40px; height:4px; background:#d1d5db; border-radius:2px; margin:0 auto 20px; }
+.modal-input { width:100%; border:2px solid #e5e7eb; border-radius:12px; padding:12px 16px; font-size:16px; outline:none; }
+.modal-input:focus { border-color:var(--purple); }
+.modal-btn { width:100%; background:linear-gradient(135deg,var(--purple),var(--pink)); color:white; border:none; border-radius:12px; padding:14px; font-size:16px; font-weight:600; cursor:pointer; margin-top:12px; }
+.modal-cancel { width:100%; background:var(--gray-light); color:var(--gray); border:none; border-radius:12px; padding:14px; font-size:16px; font-weight:600; cursor:pointer; margin-top:8px; }
+.confetti-piece { position:fixed; pointer-events:none; z-index:9999; animation:cf 1.5s ease-out forwards; }
+@keyframes cf { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+.quote-box { background:white; border-radius:var(--radius); padding:12px 16px; margin-bottom:16px; box-shadow:var(--shadow); text-align:center; font-style:italic; color:var(--text-muted); font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title">⭐ Mukta's Tracker</div>
+      <div class="header-subtitle" id="headerSub"></div>
+    </div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+  <div class="points-banner">
+    <div>
+      <div style="font-size:12px;opacity:0.85;margin-bottom:2px">This week's points</div>
+      <div><span class="points-value" id="weekPts">0</span> <span style="font-size:13px;opacity:0.8">pts</span></div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:11px;opacity:0.75;margin-bottom:4px">Week progress</div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="weekBar" style="width:0%"></div></div>
+      <div style="font-size:12px;opacity:0.8;margin-top:4px" id="weekLabel"></div>
+    </div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-tab active" onclick="switchTab('tasks')" id="tab-tasks"><span class="nav-tab-icon">✅</span>Tasks</button>
+  <button class="nav-tab" onclick="switchTab('rewards')" id="tab-rewards"><span class="nav-tab-icon">🎁</span>Rewards</button>
+  <button class="nav-tab" onclick="switchTab('history')" id="tab-history"><span class="nav-tab-icon">📊</span>Progress</button>
+  <button class="nav-tab" onclick="switchTab('parent')" id="tab-parent"><span class="nav-tab-icon">🔑</span>Parent</button>
+</div>
+
+<div class="screen active" id="screen-tasks">
+  <div class="quote-box" id="dailyQuote"></div>
+  <div id="tasksContainer"></div>
+</div>
+<div class="screen" id="screen-rewards"></div>
+<div class="screen" id="screen-history"></div>
+<div class="screen" id="screen-parent"></div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px" id="mTitle"></div>
+    <div style="font-size:14px;color:var(--text-muted);margin-bottom:20px" id="mSub"></div>
+    <div id="mBody"></div>
+  </div>
+</div>
+
+<script>
+// ------------------------------------------------------------------
+// DATA - Updated with requested modifications
+// ------------------------------------------------------------------
+let TASKS = [
+  // Personal Care
+  {id:'t01',icon:'🪥',name:'Brush teeth — morning',cat:'Personal Care',pts:5,freq:'daily',visible:true},
+  {id:'t02',icon:'🦷',name:'Brush teeth — night',cat:'Personal Care',pts:5,freq:'daily',visible:true},
+  {id:'t03',icon:'🛁',name:'Bath daily',cat:'Personal Care',pts:10,freq:'daily',visible:true},
+  // Updated sleep on time -> Sleep before 11 pm
+  {id:'t04',icon:'😴',name:'Sleep before 11 pm',cat:'Personal Care',pts:15,freq:'daily',visible:true},
+  // New tasks
+  {id:'t35',icon:'🧴',name:'Hair grooming',cat:'Personal Care',pts:5,freq:'daily',visible:true},
+  {id:'t36',icon:'🧼',name:'Wash face, hands, legs after coming from outside/play',cat:'Personal Care',pts:10,freq:'daily',visible:true},
+  {id:'t37',icon:'🛁',name:'Bring towel and clothes during bath',cat:'Personal Care',pts:5,freq:'daily',visible:true},
+  
+  // Music Practice
+  {id:'t05',icon:'🎹',name:'Practise harmonium (30 mins)',cat:'Music Practice',pts:25,freq:'daily',visible:true},
+  {id:'t06',icon:'🎸',name:'Practise guitar (30 mins)',cat:'Music Practice',pts:25,freq:'daily',visible:true},
+  {id:'t07',icon:'🎵',name:'Attend music class (no bunking)',cat:'Music Practice',pts:20,freq:'weekly',visible:true},
+  
+  // School Readiness - Wake up time will be dynamic based on season
+  {id:'t08',icon:'⏰',name:'Wake up on time',cat:'School Readiness',pts:10,freq:'daily',visible:true}, // dynamic desc in render
+  {id:'t09',icon:'🚀',name:'Ready for school on time',cat:'School Readiness',pts:15,freq:'daily',visible:true},
+  {id:'t10',icon:'📚',name:'No bunking school classes',cat:'School Readiness',pts:20,freq:'daily',visible:true},
+  {id:'t11',icon:'🎒',name:'Keep school bag in room',cat:'School Readiness',pts:5,freq:'daily',schoolOnly:1,visible:true},
+  {id:'t12',icon:'👔',name:'Keep school uniform neatly',cat:'School Readiness',pts:10,freq:'daily',schoolOnly:1,visible:true},
+  
+  // Home Responsibilities - Updated
+  {id:'t13',icon:'👟',name:'Keep shoes in rack',cat:'Home Responsibilities',pts:5,freq:'daily',visible:true},
+  {id:'t14',icon:'🛏️',name:'Fold bed blanket after waking',cat:'Home Responsibilities',pts:10,freq:'daily',visible:true},
+  {id:'t15',icon:'👕',name:'Fold laundry, keep clothes neat folded in cupboard',cat:'Home Responsibilities',pts:15,freq:'weekly',visible:true},
+  {id:'t16',icon:'🗂️',name:'Declutter study books',cat:'Home Responsibilities',pts:15,freq:'weekly',visible:true},
+  {id:'t17',icon:'🧹',name:'Keep hall neat and tidy',cat:'Home Responsibilities',pts:20,freq:'weekly',visible:true},
+  {id:'t18',icon:'🤝',name:'Help mom with home tasks',cat:'Home Responsibilities',pts:30,freq:'bonus',visible:true},
+  // New tasks added
+  {id:'t38',icon:'💡',name:'Save electricity: switch off lights/fans when not needed',cat:'Home Responsibilities',pts:10,freq:'daily',visible:true},
+  
+  // Studies & Reading
+  {id:'t19',icon:'📖',name:'Study daily (1 hour)',cat:'Studies & Reading',pts:30,freq:'daily',visible:true},
+  {id:'t20',icon:'📚',name:'Reading habit (30 mins)',cat:'Studies & Reading',pts:20,freq:'daily',visible:true},
+  
+  // Health & Wellness - Updated
+  {id:'t21',icon:'🧘',name:'Do puja / meditation',cat:'Health & Wellness',pts:15,freq:'daily',visible:true},
+  {id:'t22',icon:'🍽️',name:'No screens during meals; lunch by 1pm, dinner by 10pm',cat:'Health & Wellness',pts:15,freq:'daily',visible:true},
+  {id:'t23',icon:'🥗',name:'Finish all tiffin and meals',cat:'Health & Wellness',pts:15,freq:'daily',visible:true},
+  {id:'t24',icon:'🥤',name:'Drink 6+ glasses of water',cat:'Health & Wellness',pts:10,freq:'daily',visible:true},
+  {id:'t25',icon:'🍎',name:'Choose healthy snacks',cat:'Health & Wellness',pts:10,freq:'daily',visible:true},
+  {id:'t26',icon:'🏃',name:'5000 steps outside',cat:'Health & Wellness',pts:15,freq:'daily',visible:true},
+  {id:'t34',icon:'🏊',name:'Go swimming',cat:'Health & Wellness',pts:30,freq:'daily',visible:true},
+  // New tasks
+  {id:'t39',icon:'📱',name:'Less than 2 hours total screen time (mobile+TV)',cat:'Health & Wellness',pts:20,freq:'daily',visible:true},
+  {id:'t40',icon:'📿',name:'Learn Sanskrit shlokas for 30 mins',cat:'Health & Wellness',pts:20,freq:'daily',visible:true},
+  
+  // Good Habits - Updated
+  {id:'t27',icon:'📓',name:'Write in gratitude journal',cat:'Good Habits',pts:10,freq:'daily',visible:true},
+  {id:'t28',icon:'🗃️',name:'Organise bed and shelf',cat:'Good Habits',pts:15,freq:'weekly',visible:true},
+  {id:'t29',icon:'📵',name:'No screens/mobile on bed after 10pm; keep phone in hall',cat:'Good Habits',pts:10,freq:'daily',visible:true},
+  
+  // Learning tasks
+  {id:'t30',icon:'📺',name:'Watch 20 minutes of news',cat:'Learning',pts:15,freq:'daily',visible:true},
+  {id:'t31',icon:'🎥',name:'Watch 45 min educational documentary',cat:'Learning',pts:25,freq:'daily',visible:true},
+  {id:'t33',icon:'🎧',name:'Listen 30-45 min audiobook',cat:'Learning',pts:20,freq:'daily',visible:true},
+  
+  // Summer Vacation tasks (v01 to v12) - removed v08 (help plan dinner)
+  {id:'v01',icon:'🎨',name:'Art or drawing or craft (30 mins)',cat:'Summer Vacation',pts:20,freq:'daily',vac:1,visible:true},
+  {id:'v02',icon:'👩‍🍳',name:'Learn a new recipe with mom',cat:'Summer Vacation',pts:25,freq:'weekly',vac:1,visible:true},
+  {id:'v03',icon:'💃',name:'Dance or yoga practice (20 mins)',cat:'Summer Vacation',pts:20,freq:'daily',vac:1,visible:true},
+  {id:'v04',icon:'✍️',name:'Write a short story or diary entry',cat:'Summer Vacation',pts:20,freq:'daily',vac:1,visible:true},
+  {id:'v05',icon:'📝',name:'Learn 5 new words any language',cat:'Summer Vacation',pts:15,freq:'daily',vac:1,visible:true},
+  {id:'v06',icon:'🎬',name:'Watch one educational video (30 mins)',cat:'Summer Vacation',pts:15,freq:'daily',vac:1,visible:true},
+  {id:'v07',icon:'📞',name:'Visit grandparents once a week',cat:'Summer Vacation',pts:20,freq:'weekly',vac:1,visible:true},
+  {id:'v09',icon:'🧩',name:'Play a board game or puzzle',cat:'Summer Vacation',pts:15,freq:'daily',vac:1,visible:true},
+  {id:'v10',icon:'🌅',name:'No screen before 10am',cat:'Summer Vacation',pts:15,freq:'daily',vac:1,visible:true},
+  {id:'v11',icon:'🚶',name:'Morning walk or stretching (20 mins)',cat:'Summer Vacation',pts:15,freq:'daily',vac:1,visible:true},
+  {id:'v12',icon:'🧹',name:'Tidy her full room independently',cat:'Summer Vacation',pts:20,freq:'weekly',vac:1,visible:true}
+];
+
+// Rewards
+const REWARDS = [
+  {id:'r01',icon:'📺',name:'30 mins TV / mobile time',cost:30,cat:'Screen Time',desc:'Watch your favourite show!'},
+  {id:'r02',icon:'📺',name:'1 hour TV / mobile time',cost:60,cat:'Screen Time',desc:'Extra screen time treat!'},
+  {id:'r03',icon:'🎬',name:'Movie night (1 hour)',cost:80,cat:'Screen Time',desc:'Pick any movie for movie night!'},
+  {id:'r04',icon:'🍕',name:'Favourite treat or snack',cost:50,cat:'Food & Treats',desc:'Pizza, burger, ice cream — your choice!'},
+  {id:'r05',icon:'🍰',name:'Special dessert',cost:80,cat:'Food & Treats',desc:'Cake or dessert of your choice!'},
+  {id:'r06',icon:'🎮',name:'Family game or outing',cost:100,cat:'Experiences',desc:'Game night or a fun outing together!'},
+  {id:'r07',icon:'🛍️',name:'Trip to park or mall',cost:150,cat:'Experiences',desc:'A fun day out with family!'},
+  {id:'r08',icon:'📗',name:'Book of her choice',cost:150,cat:'Items & Gifts',desc:'Pick any book you want!'},
+  {id:'r09',icon:'🎁',name:'Small wishlist item',cost:200,cat:'Items & Gifts',desc:'Something small from your wishlist!'},
+  {id:'r10',icon:'🎉',name:'Surprise party',cost:300,cat:'Experiences',desc:'A special party with your friends!'},
+  {id:'r11',icon:'⭐',name:'Big wishlist item',cost:500,cat:'Items & Gifts',desc:'A special big item from your wishlist!'}
+];
+
+const CAT_COLOR = {
+  'Personal Care':        {bg:'#fce7f3',tx:'#9d174d'},
+  'Music Practice':       {bg:'#ede9fe',tx:'#5b21b6'},
+  'School Readiness':     {bg:'#dbeafe',tx:'#1e40af'},
+  'Home Responsibilities':{bg:'#ccfbf1',tx:'#0f766e'},
+  'Studies & Reading':    {bg:'#fef3c7',tx:'#92400e'},
+  'Health & Wellness':    {bg:'#dcfce7',tx:'#166534'},
+  'Good Habits':          {bg:'#e0f2fe',tx:'#075985'},
+  'Summer Vacation':      {bg:'#ccfbf1',tx:'#0f766e'},
+  'Learning':             {bg:'#ede9fe',tx:'#5b21b6'}
+};
+
+// PIN (change here if desired)
+const PARENT_PIN = "1234";
+
+// Daily quotes
+const QUOTES = [
+  "🌟 Small steps every day lead to big achievements!",
+  "💪 You are capable of amazing things. Keep going!",
+  "📚 Every task you complete builds your future self.",
+  "🌼 Consistency is more important than intensity.",
+  "🎯 A habit is a superpower. You're building it!",
+  "⭐ Believe in yourself — you've got this!",
+  "🌈 Progress, not perfection. Well done!",
+  "🌸 Your effort today will bloom tomorrow."
+];
+
+// ------------------------------------------------------------------
+// HELPERS (unchanged)
+// ------------------------------------------------------------------
+function getSeason() { return localStorage.getItem('mukta_season') || 'school'; }
+function setSeason(s) { localStorage.setItem('mukta_season', s); }
+
+function getCustomTasks() {
+  let stored = localStorage.getItem('mukta_tasks');
+  if (stored) {
+    try {
+      let parsed = JSON.parse(stored);
+      let merged = [...TASKS];
+      for (let t of parsed) {
+        let idx = merged.findIndex(tt => tt.id === t.id);
+        if (idx !== -1) merged[idx] = t;
+        else merged.push(t);
+      }
+      return merged;
+    } catch(e) {}
+  }
+  return TASKS;
+}
+
+function saveCustomTasks(tasks) {
+  localStorage.setItem('mukta_tasks', JSON.stringify(tasks));
+  TASKS = tasks;
+}
+
+function activeTasks() {
+  let season = getSeason();
+  let allTasks = getCustomTasks();
+  return allTasks.filter(t => {
+    if (t.vac && season !== 'vacation') return false;
+    if (t.schoolOnly && season === 'vacation') return false;
+    if (t.visible === false) return false;
+    return true;
+  });
+}
+
+function weekKey() {
+  let n = new Date(), d = n.getDay();
+  let mon = new Date(n);
+  mon.setDate(n.getDate() - ((d===0?7:d)-1));
+  return mon.toISOString().slice(0,10);
+}
+function todayKey() { return new Date().toISOString().slice(0,10); }
+
+function loadS() { try { return JSON.parse(localStorage.getItem('mukta_s')||'{}'); } catch(e) { return {}; } }
+function saveS(s) { localStorage.setItem('mukta_s', JSON.stringify(s)); }
+
+function getCtx() {
+  let s = loadS(), wk = weekKey(), td = todayKey();
+  if (!s.w) s.w = {};
+  if (!s.w[wk]) s.w[wk] = {d:{}, rr:[], meta: s.w[wk]?.meta || {}};
+  if (!s.w[wk].d[td]) s.w[wk].d[td] = {c:[]};
+  return {s:s, wk:wk, td:td};
+}
+
+function todayDone() { return getCtx().s.w[getCtx().wk].d[getCtx().td].c || []; }
+
+function weekPts() {
+  let x = getCtx(), tot = 0;
+  Object.values(x.s.w[x.wk].d).forEach(day => { (day.c||[]).forEach(e => { if(e.p) tot += e.p; }); });
+  return tot;
+}
+
+function dayPts(dk) {
+  let x = getCtx();
+  if (!x.s.w[x.wk].d[dk]) return 0;
+  return (x.s.w[x.wk].d[dk].c||[]).reduce((s,e) => s + (e.p||0), 0);
+}
+
+function weekHistory() {
+  let x = getCtx(), out = [];
+  Object.entries(x.s.w[x.wk].d).forEach(p => {
+    (p[1].c||[]).forEach(e => out.push(Object.assign({},e,{date:p[0]})));
+  });
+  return out.sort((a,b) => b.t - a.t);
+}
+
+function redeemedList() { return getCtx().s.w[getCtx().wk].rr || []; }
+
+function allWkPts() {
+  let s=loadS(), res={};
+  if (!s.w) return res;
+  Object.entries(s.w).forEach(p => {
+    let tot=0;
+    Object.values(p[1].d||{}).forEach(d => (d.c||[]).forEach(e => tot += (e.p||0)));
+    res[p[0]] = tot;
+  });
+  return res;
+}
+
+function doComplete(id) {
+  let x = getCtx(), tasks = getCustomTasks();
+  let t = tasks.find(t => t.id === id);
+  if (!t) return false;
+  let done = x.s.w[x.wk].d[x.td].c;
+  if (done.find(e => e.id === id)) return false;
+  done.push({id:id, name:t.name, icon:t.icon, p:t.pts, t:Date.now()});
+  saveS(x.s); return true;
+}
+
+function doUncomplete(id) {
+  let x = getCtx(), done = x.s.w[x.wk].d[x.td].c;
+  let i = done.findIndex(e => e.id === id);
+  if (i === -1) return false;
+  done.splice(i,1); saveS(x.s); return true;
+}
+
+function doRedeem(id) {
+  let x = getCtx(), r = REWARDS.find(r => r.id === id);
+  if (!r || weekPts() < r.cost) return false;
+  let td = todayKey();
+  if (!x.s.w[x.wk].d[td]) x.s.w[x.wk].d[td] = {c:[]};
+  x.s.w[x.wk].d[td].c.push({id:'rw_'+id+'_'+Date.now(), name:'Reward: '+r.name, icon:r.icon, p:-r.cost, t:Date.now(), isRw:1});
+  x.s.w[x.wk].rr.push({id:id, name:r.name, cost:r.cost, t:Date.now()});
+  saveS(x.s); return true;
+}
+
+// Birthday bonus
+function checkBirthday() {
+  let settings = JSON.parse(localStorage.getItem('mukta_settings') || '{}');
+  if (!settings.birthday) return false;
+  let bday = new Date(settings.birthday);
+  let today = new Date();
+  if (bday.getMonth() === today.getMonth() && bday.getDate() === today.getDate()) {
+    let yearKey = today.getFullYear();
+    let given = localStorage.getItem('mukta_bday_given_'+yearKey);
+    if (!given) {
+      localStorage.setItem('mukta_bday_given_'+yearKey, 'yes');
+      return true;
+    }
+  }
+  return false;
+}
+
+function giveBirthdayBonus() {
+  let x = getCtx(), td = todayKey();
+  if (!x.s.w[x.wk].d[td]) x.s.w[x.wk].d[td] = {c:[]};
+  x.s.w[x.wk].d[td].c.push({id:'bday_'+Date.now(), name:'🎂 Birthday Bonus!', icon:'🎂', p:50, t:Date.now(), isBonus:1});
+  saveS(x.s);
+  showToast("🎉 Happy Birthday! +50 bonus points!", "success");
+}
+
+// Monthly trophy
+function getMonthlyTotal() {
+  let now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth();
+  let all = allWkPts();
+  let total = 0;
+  for (let wk in all) {
+    let wkDate = new Date(wk);
+    if (wkDate.getFullYear() === year && wkDate.getMonth() === month) {
+      total += all[wk];
+    }
+  }
+  return total;
+}
+function getBestMonth() {
+  let all = allWkPts();
+  let monthly = {};
+  for (let wk in all) {
+    let d = new Date(wk);
+    let key = d.getFullYear() + '-' + d.getMonth();
+    monthly[key] = (monthly[key] || 0) + all[wk];
+  }
+  let best = 0;
+  for (let k in monthly) if (monthly[k] > best) best = monthly[k];
+  return best;
+}
+
+// PDF Export
+function exportPDF(scope = 'week') {
+  let tasks = activeTasks();
+  let wk = weekKey();
+  let history = weekHistory();
+  let html = `
+    <html>
+    <head><title>Mukta's Progress Report</title>
+    <style>
+      body { font-family: sans-serif; margin: 20px; }
+      h1 { color: #7c3aed; }
+      table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+      th { background: #f3f4f6; }
+      .total { font-weight: bold; margin-top: 10px; }
+    </style>
+    </head>
+    <body>
+    <h1>Mukta's Habit Tracker Report</h1>
+    <p>Generated: ${new Date().toLocaleString()}</p>
+    <h2>${scope === 'week' ? 'Current Week' : 'All History'}</h2>
+    ${scope === 'week' ? `<p>Week starting: ${new Date(wk).toDateString()}</p><p>Total points: ${weekPts()}</p>` : ''}
+    <h3>Completed Tasks</h3>
+    <table>
+      <tr><th>Date</th><th>Task</th><th>Points</th><th>Time</th></tr>
+      ${history.map(e => `<tr><td>${e.date}</td><td>${e.name}</td><td>${e.p}</td><td>${new Date(e.t).toLocaleTimeString()}</td></tr>`).join('')}
+    </table>
+    <div class="total">Total points: ${history.reduce((s,e)=>s+(e.p>0?e.p:0),0)}</div>
+    </body>
+    </html>
+  `;
+  let win = window.open();
+  win.document.write(html);
+  win.document.close();
+  win.print();
+}
+
+// Parent PIN modal
+function parentAuth(callback) {
+  openM("🔐 Parent Access", "Enter PIN to continue",
+    `<input id="pinInput" class="modal-input" type="password" placeholder="Enter PIN" />
+     <button class="modal-btn" onclick="checkParentPIN('${callback}')">Unlock</button>
+     <button class="modal-cancel" onclick="closeModal()">Cancel</button>`
+  );
+}
+window.checkParentPIN = function(cb) {
+  let pin = document.getElementById('pinInput').value;
+  if (pin === PARENT_PIN) {
+    closeModal();
+    if (cb === 'addTask') showAddTaskModal();
+    else if (cb === 'editTasks') showTaskEditor();
+    else if (cb === 'resetWeek') confirmReset();
+    else if (cb === 'adjustPoints') showAdjust();
+    else if (cb === 'exportWeek') exportPDF('week');
+    else if (cb === 'exportAll') exportPDF('all');
+  } else {
+    showToast("Wrong PIN", "error");
+  }
+};
+
+// Collapsible categories
+let collapsedCategories = {};
+
+function loadCollapsedState() {
+  let stored = localStorage.getItem('mukta_collapsed_cats');
+  if (stored) {
+    try {
+      collapsedCategories = JSON.parse(stored);
+    } catch(e) {}
+  }
+}
+
+function saveCollapsedState() {
+  localStorage.setItem('mukta_collapsed_cats', JSON.stringify(collapsedCategories));
+}
+
+function toggleCategory(catName) {
+  collapsedCategories[catName] = !collapsedCategories[catName];
+  saveCollapsedState();
+  renderTasks();
+}
+
+// ------------------------------------------------------------------
+// RENDER TASKS with dynamic wake-up time
+// ------------------------------------------------------------------
+function renderTasks() {
+  let el = document.getElementById('tasksContainer');
+  let done = todayDone();
+  let doneIds = new Set(done.filter(e => !e.isRw && !e.isAdj && !e.isBonus).map(e => e.id));
+  let at = activeTasks();
+  let isVac = getSeason() === 'vacation';
+  // Update wake-up task name dynamically based on season
+  let wakeTask = at.find(t => t.id === 't08');
+  if (wakeTask) {
+    wakeTask.name = isVac ? 'Wake up before 9:30 am' : 'Wake up before 7:30 am (school days)';
+  }
+  let cats = {};
+  at.forEach(t => {
+    if (!cats[t.cat]) cats[t.cat] = {p:[], d:[]};
+    if (doneIds.has(t.id)) cats[t.cat].d.push(t);
+    else cats[t.cat].p.push(t);
+  });
+
+  let dailyMax = at.filter(t => t.freq === 'daily').reduce((s,t) => s + t.pts, 0);
+  let todayEarned = done.filter(e => e.p > 0).reduce((s,e) => s + e.p, 0);
+  let pct = dailyMax > 0 ? Math.min(100, Math.round(todayEarned/dailyMax*100)) : 0;
+
+  let h = `
+    <div style="background:linear-gradient(135deg,${isVac?'#0d9488,#0f766e':'#7c3aed,#5b21b6'});color:white;border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">${isVac?'☀️':'🏫'}</span>
+      <div><div style="font-size:13px;font-weight:600">${isVac?'Summer Vacation Mode':'School Mode'}</div>
+      <div style="font-size:11px;opacity:0.85">${isVac?'Vacation tasks active · School tasks paused':'School tasks active'}</div></div></div>
+      <span style="font-size:11px;opacity:0.8;background:rgba(255,255,255,0.2);padding:3px 8px;border-radius:10px">Change in Parent tab</span>
+    </div>
+    <div style="background:white;border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Today's progress</span>
+        <span style="font-size:13px;font-weight:700;color:var(--purple)">${todayEarned} pts earned</span>
+      </div>
+      <div style="background:#f3f4f6;border-radius:6px;height:10px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:6px;transition:width 0.5s ease"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text-muted)">
+        <span>${doneIds.size} tasks done</span><span>${pct}% of daily max</span>
+      </div>
+    </div>
+  `;
+
+  for (let cat in cats) {
+    let lists = cats[cat];
+    if (lists.p.length + lists.d.length === 0) continue;
+    let c = CAT_COLOR[cat] || {bg:'#f3f4f6',tx:'#374151'};
+    let isCollapsed = collapsedCategories[cat] === true;
+    let toggleIcon = isCollapsed ? '▶' : '▼';
+    
+    h += `<div class="category-header" onclick="toggleCategory('${cat}')">
+            <div class="sec-hdr" style="color:${c.tx}; margin:0;">
+              <span style="background:${c.bg};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:0">${cat}</span>
+            </div>
+            <button class="category-toggle" aria-label="Toggle section">${toggleIcon}</button>
+          </div>`;
+    h += `<div class="category-content ${isCollapsed ? 'collapsed' : ''}" data-cat="${cat}">`;
+    [...lists.p, ...lists.d].forEach(t => {
+      let isDone = doneIds.has(t.id);
+      h += `<div class="task-card${isDone?' done':''}" onclick="toggleTask('${t.id}')">
+        <div class="task-icon">${t.icon}</div>
+        <div style="flex:1;min-width:0"><div class="task-name">${t.name}</div>
+        <div class="task-meta"><span class="task-pts">+${t.pts} pts</span>
+        <span style="font-size:11px;background:${c.bg};color:${c.tx};padding:2px 8px;border-radius:20px">${t.freq}</span></div></div>
+        <div class="task-check">${isDone?'✓':''}</div>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+
+  el.innerHTML = h;
+  // daily quote
+  let quoteIdx = Math.floor(Date.now() / 86400000) % QUOTES.length;
+  document.getElementById('dailyQuote').innerHTML = `💬 "${QUOTES[quoteIdx]}"`;
+}
+
+// ------------------------------------------------------------------
+// REST OF FUNCTIONS (unchanged from previous version)
+// ------------------------------------------------------------------
+function renderRewards() {
+  let el = document.getElementById('screen-rewards');
+  let pts = weekPts(), rr = redeemedList();
+  let cats = {};
+  REWARDS.forEach(r => { if(!cats[r.cat]) cats[r.cat]=[]; cats[r.cat].push(r); });
+  let h = `<div style="background:white;border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between">
+    <div><div style="font-size:12px;color:var(--text-muted)">Available to spend</div>
+    <div style="font-size:28px;font-weight:800;color:var(--purple)">${pts} <span style="font-size:14px;font-weight:500;color:var(--text-muted)">points</span></div></div>
+    <div style="font-size:40px">💰</div></div>`;
+  if (rr.length) {
+    h += `<div class="sec-hdr">🎀 Redeemed this week</div>`;
+    rr.forEach(r => {
+      let rw = REWARDS.find(x => x.id === r.id);
+      h += `<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        <span style="font-size:24px">${rw?rw.icon:'🎁'}</span>
+        <div><div style="font-weight:600;font-size:14px">${r.name}</div><div style="font-size:12px;color:var(--text-muted)">${r.cost} pts spent</div></div>
+        <span style="margin-left:auto;font-size:18px">✅</span></div>`;
+    });
+  }
+  Object.entries(cats).forEach(([cat, list]) => {
+    h += `<div class="sec-hdr">🏷️ ${cat}</div>`;
+    list.forEach(r => {
+      let can = pts >= r.cost;
+      h += `<div class="reward-card"><div class="reward-icon">${r.icon}</div>
+        <div style="flex:1"><div class="reward-name">${r.name}</div><div class="reward-desc">${r.desc}</div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="reward-cost">${r.cost} pts</span>
+          <button class="redeem-btn" ${can?'':'disabled'} onclick="confirmRedeem('${r.id}')">${can?'Redeem 🎉':'Need more pts'}</button>
+        </div></div>`;
+    });
+  });
+  el.innerHTML = h;
+}
+
+function renderProgress() {
+  let el = document.getElementById('screen-history');
+  let wp = weekPts(), hist = weekHistory();
+  let th = hist.filter(e => e.p > 0 && !e.isRw);
+  let at = activeTasks();
+  let dm = at.filter(t => t.freq === 'daily').reduce((s,t) => s + t.pts, 0);
+  let wm = dm * 7;
+  let today = new Date(), td2 = today.getDay(), mo = td2===0?6:td2-1;
+  let days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let dpHtml = '';
+  for (let i=0;i<7;i++) {
+    let dd = new Date(today); dd.setDate(today.getDate() - mo + i);
+    let dk = dd.toISOString().slice(0,10);
+    let dp = dayPts(dk), isT = dk === todayKey(), isPast = dd <= today;
+    dpHtml += `<div class="day-pill${isT?' today':''}${dp>0?' has-pts':''}"><span style="font-size:10px;font-weight:600;opacity:0.7">${days[i]}</span><span style="font-size:12px;font-weight:700">${isPast?(dp>0?dp:'—'):'·'}</span></div>`;
+  }
+  let streak=0;
+  for (let j=0;j<=mo;j++) {
+    let sd=new Date(today); sd.setDate(today.getDate()-j);
+    if (dayPts(sd.toISOString().slice(0,10))>0) streak++;
+    else if (j>0) break;
+  }
+  let monthlyTotal = getMonthlyTotal();
+  let bestMonth = getBestMonth();
+  let hHtml = '';
+  if (th.length===0) hHtml = '<div style="text-align:center;padding:40px 20px;color:var(--text-muted);font-size:14px">No tasks done yet this week.<br>Tap tasks to start earning! 🌟</div>';
+  else {
+    let gr = {};
+    th.forEach(e => { if(!gr[e.date]) gr[e.date]=[]; gr[e.date].push(e); });
+    Object.entries(gr).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([date,list]) => {
+      let lbl = date===todayKey()?'Today':new Date(date).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
+      let dpts = list.reduce((s,e)=>s+e.p,0);
+      hHtml += `<div style="font-size:12px;font-weight:600;color:var(--text-muted);margin:14px 0 6px;display:flex;justify-content:space-between"><span>${lbl}</span><span style="color:var(--purple)">${dpts} pts</span></div>`;
+      list.forEach(e => {
+        hHtml += `<div class="history-item"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">${e.icon}</span><div><div style="font-size:14px;font-weight:500">${e.name}</div><div style="font-size:11px;color:var(--text-muted)">${new Date(e.t).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div></div></div><span style="font-size:14px;font-weight:700;color:var(--green)">+${e.p}</span></div>`;
+      });
+    });
+  }
+  let wk = weekKey();
+  el.innerHTML = (streak>1?`<div style="background:linear-gradient(135deg,var(--amber),#f97316);color:white;border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:14px"><span style="font-size:40px">🔥</span><div><div style="font-size:36px;font-weight:800">${streak}</div><div style="font-size:13px;opacity:0.9">day streak!</div></div></div>`:'')
+    + `<div class="summary-card"><div style="font-size:13px;opacity:0.85;font-weight:500">📅 Week of ${new Date(wk).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+    <div class="summary-grid">
+      <div class="summary-stat"><div style="font-size:24px;font-weight:800">${wp}</div><div style="font-size:11px;opacity:0.8;margin-top:4px">Total pts</div></div>
+      <div class="summary-stat"><div style="font-size:24px;font-weight:800">${th.length}</div><div style="font-size:11px;opacity:0.8;margin-top:4px">Tasks done</div></div>
+      <div class="summary-stat"><div style="font-size:24px;font-weight:800">${Math.round(wp/Math.max(wm,1)*100)}%</div><div style="font-size:11px;opacity:0.8;margin-top:4px">Of max</div></div>
+    </div></div>
+    <div class="sec-hdr">🏆 Monthly Trophy</div>
+    <div style="background:white;border-radius:var(--radius);padding:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <div><span style="font-size:20px">🏆</span> This month: <strong>${monthlyTotal}</strong> pts</div>
+      <div>Best month: <strong>${bestMonth}</strong> pts</div>
+    </div>
+    <div class="sec-hdr">📅 This week day by day</div><div class="day-pills">${dpHtml}</div>
+    <div class="sec-hdr">📋 Completed tasks</div>${hHtml}`;
+}
+
+function renderParent() {
+  let el = document.getElementById('screen-parent');
+  let pts = weekPts(), done = todayDone().filter(e => e.p>0 && !e.isRw);
+  let wk = weekKey(), aw = allWkPts();
+  let tot = Object.values(aw).reduce((s,v)=>s+Math.max(0,v),0);
+  let isVac = getSeason()==='vacation', rr = redeemedList();
+  let settings = JSON.parse(localStorage.getItem('mukta_settings') || '{}');
+  let bday = settings.birthday ? new Date(settings.birthday).toLocaleDateString() : 'Not set';
+
+  el.innerHTML = `<div class="info-card">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px">📊 Quick Stats</div>
+    <div class="info-row"><span class="info-key">This week's points</span><span class="info-val">${pts} pts</span></div>
+    <div class="info-row"><span class="info-key">Tasks done today</span><span class="info-val">${done.length} tasks</span></div>
+    <div class="info-row"><span class="info-key">Total points ever</span><span class="info-val">${tot} pts</span></div>
+    <div class="info-row"><span class="info-key">Week started</span><span class="info-val">${new Date(wk).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span></div>
+    <div class="info-row"><span class="info-key">Birthday (for bonus)</span><span class="info-val">${bday}</span></div>
+    </div>
+    <div class="info-card">
+      <div style="font-size:14px;font-weight:700;margin-bottom:6px">🌤️ Season Mode</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Switch tasks between school year and summer vacation</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="changeSeason('school')" style="padding:12px;border-radius:12px;border:2px solid ${!isVac?'#7c3aed':'#e5e7eb'};background:${!isVac?'#ede9fe':'white'};font-size:13px;font-weight:600;color:${!isVac?'#5b21b6':'#6b7280'};cursor:pointer">🏫 School Mode</button>
+        <button onclick="changeSeason('vacation')" style="padding:12px;border-radius:12px;border:2px solid ${isVac?'#0d9488':'#e5e7eb'};background:${isVac?'#ccfbf1':'white'};font-size:13px;font-weight:600;color:${isVac?'#0f766e':'#6b7280'};cursor:pointer">☀️ Vacation Mode</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:8px">${isVac?'12 vacation tasks active · School-specific tasks paused':'All school tasks active · Vacation tasks hidden'}</div>
+    </div>
+    <div class="info-card">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px">🎁 Redeemed This Week</div>
+      ${rr.length===0?'<p style="font-size:13px;color:var(--text-muted)">None yet this week.</p>':rr.map(r=>`<div class="info-row"><span class="info-key">${r.name}</span><span class="info-val" style="color:var(--red)">−${r.cost} pts</span></div>`).join('')}
+    </div>
+    <div class="info-card">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px">⚙️ Parent Controls (PIN protected)</div>
+      <button class="ctrl-btn" style="background:linear-gradient(135deg,var(--teal),#0f766e)" onclick="parentAuth('adjustPoints')">✏️ Adjust Points Manually</button>
+      <button class="ctrl-btn" style="background:linear-gradient(135deg,var(--purple),var(--pink))" onclick="parentAuth('addTask')">➕ Add Custom Task</button>
+      <button class="ctrl-btn" style="background:linear-gradient(135deg,var(--purple),var(--pink))" onclick="parentAuth('editTasks')">📝 Edit / Hide Tasks</button>
+      <button class="ctrl-btn" style="background:linear-gradient(135deg,var(--teal),#0f766e)" onclick="parentAuth('exportWeek')">📄 Export This Week (PDF)</button>
+      <button class="ctrl-btn" style="background:linear-gradient(135deg,var(--teal),#0f766e)" onclick="parentAuth('exportAll')">📄 Export All History (PDF)</button>
+      <button class="ctrl-btn" style="background:linear-gradient(135deg,#ef4444,#dc2626)" onclick="parentAuth('resetWeek')">🔄 Start New Week (Reset Points)</button>
+      <button class="ctrl-btn" style="background:linear-gradient(135deg,var(--amber),#f97316)" onclick="setBirthday()">🎂 Set Birthday (Bonus Points)</button>
+      <button class="ctrl-btn" style="background:linear-gradient(135deg,var(--teal),#0f766e)" onclick="syncToCloud()">☁️ Backup to Cloud</button>
+      <button class="ctrl-btn" style="background:linear-gradient(135deg,var(--teal),#0f766e)" onclick="restoreFromCloud()">📥 Restore from Cloud</button>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:12px">PIN: ${PARENT_PIN}</p>
+    </div>`;
+}
+
+// ------------------------------------------------------------------
+// Cloud sync functions
+// ------------------------------------------------------------------
+async function syncToCloud() {
+  const secret = prompt("Enter sync password (use the secret you set in Netlify):");
+  if (!secret) return;
+  
+  // Capture the entire app state
+  const data = {
+    mukta_s: loadS(),
+    mukta_tasks: getCustomTasks(),
+    mukta_season: getSeason(),
+    mukta_settings: JSON.parse(localStorage.getItem('mukta_settings') || '{}')
+  };
+  
+  try {
+    const res = await fetch('/.netlify/functions/save-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data, secret })
+    });
+    if (res.ok) {
+      showToast("Data backed up to cloud!", "success");
+    } else {
+      const errText = await res.text();
+      showToast(`Backup failed: ${errText}`, "error");
+    }
+  } catch (err) {
+    showToast("Network error: " + err.message, "error");
+  }
+}
+
+async function restoreFromCloud() {
+  const secret = prompt("Enter sync password:");
+  if (!secret) return;
+  
+  try {
+    const res = await fetch(`/.netlify/functions/load-data?secret=${encodeURIComponent(secret)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Object.keys(data).length) {
+        // Restore all parts
+        if (data.mukta_s) localStorage.setItem('mukta_s', JSON.stringify(data.mukta_s));
+        if (data.mukta_tasks) localStorage.setItem('mukta_tasks', JSON.stringify(data.mukta_tasks));
+        if (data.mukta_season) localStorage.setItem('mukta_season', data.mukta_season);
+        if (data.mukta_settings) localStorage.setItem('mukta_settings', JSON.stringify(data.mukta_settings));
+        
+        showToast("Data restored! Refreshing...", "success");
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast("No saved data found", "info");
+      }
+    } else {
+      const errText = await res.text();
+      showToast(`Restore failed: ${errText}`, "error");
+    }
+  } catch (err) {
+    showToast("Network error", "error");
+  }
+}
+
+// ------------------------------------------------------------------
+// ACTIONS
+// ------------------------------------------------------------------
+function changeSeason(m) {
+  setSeason(m);
+  showToast(m==='vacation'?'☀️ Vacation Mode on!':'🏫 School Mode on!','success');
+  renderParent(); renderTasks(); updateHeader();
+}
+
+function toggleTask(id) {
+  let doneIds = new Set(todayDone().filter(e => !e.isRw && !e.isAdj && !e.isBonus).map(e => e.id));
+  if (doneIds.has(id)) {
+    doUncomplete(id);
+    let t = getCustomTasks().find(t => t.id === id);
+    showToast('Unchecked: '+t.name,'info');
+  } else {
+    if (doComplete(id)) {
+      let t = getCustomTasks().find(t => t.id === id);
+      confetti(); showToast('✅ +'+t.pts+' pts — Great job Mukta! 🌟','success');
+    }
+  }
+  updateHeader(); renderTasks();
+}
+
+function confirmRedeem(id) {
+  let r = REWARDS.find(r => r.id === id);
+  openM('Redeem '+r.icon+' '+r.name+'?','This will use '+r.cost+' points. You have '+weekPts()+' points.',
+    `<button class="modal-btn" onclick="submitRedeem('${id}')">Yes, redeem! 🎉</button><button class="modal-cancel" onclick="closeModal()">Cancel</button>`);
+}
+window.submitRedeem = function(id) {
+  closeModal();
+  let r = REWARDS.find(r => r.id === id);
+  if (doRedeem(id)) { confetti(); showToast('🎉 Redeemed: '+r.name+'! Enjoy!','success'); updateHeader(); renderRewards(); }
+  else showToast('Not enough points!','error');
+};
+
+function showAdjust() {
+  openM('✏️ Adjust Points','Enter a number to add (e.g. 20) or remove (e.g. -10) points.',
+    `<input class="modal-input" type="number" id="adjIn" placeholder="e.g. 20 or -10" />
+     <button class="modal-btn" onclick="submitAdjust()">Apply</button>
+     <button class="modal-cancel" onclick="closeModal()">Cancel</button>`);
+}
+window.submitAdjust = function() {
+  let v = parseInt(document.getElementById('adjIn').value);
+  if (isNaN(v)||v===0) { showToast('Enter a valid number','error'); return; }
+  let x = getCtx(), td = todayKey();
+  if (!x.s.w[x.wk].d[td]) x.s.w[x.wk].d[td] = {c:[]};
+  x.s.w[x.wk].d[td].c.push({id:'adj_'+Date.now(), name:(v>0?'Parent bonus':'Parent adjustment'), icon:(v>0?'⭐':'📝'), p:v, t:Date.now(), isAdj:1});
+  saveS(x.s); closeModal();
+  showToast('Points '+(v>0?'added':'removed')+': '+Math.abs(v),'success');
+  updateHeader(); renderParent(); renderProgress();
+};
+
+function confirmReset() {
+  openM('🔄 Start New Week?','Mukta earned '+weekPts()+' points this week. A fresh week will begin.',
+    `<button class="modal-btn" onclick="submitReset()" style="background:linear-gradient(135deg,#ef4444,#dc2626)">Yes, start new week</button>
+     <button class="modal-cancel" onclick="closeModal()">Not yet</button>`);
+}
+window.submitReset = function() {
+  closeModal();
+  let x = getCtx();
+  delete x.s.w[x.wk];
+  saveS(x.s);
+  showToast('🌟 New week started! Good luck Mukta!','success');
+  updateHeader(); renderAll();
+};
+
+function showAddTaskModal() {
+  openM("➕ Add Custom Task", "Fill in details",
+    `<input id="newTaskName" class="modal-input" placeholder="Task name" style="margin-bottom:10px" />
+     <input id="newTaskPts" class="modal-input" placeholder="Points" type="number" style="margin-bottom:10px" />
+     <select id="newTaskFreq" class="modal-input" style="margin-bottom:10px"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="bonus">Bonus</option></select>
+     <select id="newTaskCat" class="modal-input" style="margin-bottom:10px"><option>Learning</option><option>Health & Wellness</option><option>Home Responsibilities</option><option>Good Habits</option><option>Personal Care</option><option>Music Practice</option><option>School Readiness</option><option>Studies & Reading</option></select>
+     <button class="modal-btn" onclick="addCustomTask()">Add Task</button>
+     <button class="modal-cancel" onclick="closeModal()">Cancel</button>`
+  );
+}
+window.addCustomTask = function() {
+  let name = document.getElementById('newTaskName').value.trim();
+  let pts = parseInt(document.getElementById('newTaskPts').value);
+  let freq = document.getElementById('newTaskFreq').value;
+  let cat = document.getElementById('newTaskCat').value;
+  if (!name || isNaN(pts)) { showToast("Invalid input", "error"); return; }
+  let newId = 'c' + Date.now();
+  let newTask = { id:newId, icon:'✨', name:name, cat:cat, pts:pts, freq:freq, visible:true };
+  let tasks = getCustomTasks();
+  tasks.push(newTask);
+  saveCustomTasks(tasks);
+  closeModal();
+  showToast(`Task "${name}" added!`, "success");
+  renderTasks(); renderParent();
+};
+
+function showTaskEditor() {
+  let tasks = getCustomTasks();
+  let html = `<div style="max-height:60vh;overflow-y:auto">`;
+  tasks.forEach(t => {
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;border-bottom:1px solid #eee;padding:6px 0">
+      <input type="checkbox" ${t.visible!==false?'checked':''} onchange="toggleTaskVisibility('${t.id}', this.checked)" />
+      <input type="text" value="${t.name}" id="ed_name_${t.id}" style="flex:1;font-size:13px;padding:4px" />
+      <input type="number" value="${t.pts}" id="ed_pts_${t.id}" style="width:60px;font-size:13px;padding:4px" />
+      <button class="redeem-btn" style="padding:4px 8px;font-size:12px" onclick="updateTask('${t.id}')">Save</button>
+      <button class="redeem-btn" style="background:#ef4444;padding:4px 8px;font-size:12px" onclick="deleteTask('${t.id}')">🗑️</button>
+    </div>`;
+  });
+  html += `</div><button class="modal-cancel" onclick="closeModal()">Close</button>`;
+  openM("Edit / Hide Tasks", "Check to show, uncheck to hide. Edit name/points and Save.", html);
+}
+window.toggleTaskVisibility = function(id, visible) {
+  let tasks = getCustomTasks();
+  let t = tasks.find(t => t.id === id);
+  if (t) t.visible = visible;
+  saveCustomTasks(tasks);
+  renderTasks(); renderParent();
+};
+window.updateTask = function(id) {
+  let tasks = getCustomTasks();
+  let t = tasks.find(t => t.id === id);
+  if (t) {
+    let newName = document.getElementById(`ed_name_${id}`).value;
+    let newPts = parseInt(document.getElementById(`ed_pts_${id}`).value);
+    t.name = newName;
+    if (!isNaN(newPts)) t.pts = newPts;
+    saveCustomTasks(tasks);
+    showToast("Task updated", "success");
+    renderTasks(); renderParent();
+  }
+};
+window.deleteTask = function(id) {
+  if (confirm("Delete this task? This cannot be undone.")) {
+    let tasks = getCustomTasks().filter(t => t.id !== id);
+    saveCustomTasks(tasks);
+    closeModal();
+    showToast("Task deleted", "success");
+    renderTasks(); renderParent();
+  }
+};
+
+function setBirthday() {
+  openM("🎂 Birthday Bonus", "Select Mukta's birthday (once per year bonus of 50 points on that day)",
+    `<input type="date" id="bdayInput" class="modal-input" />
+     <button class="modal-btn" onclick="saveBirthday()">Save</button>
+     <button class="modal-cancel" onclick="closeModal()">Cancel</button>`
+  );
+}
+window.saveBirthday = function() {
+  let bday = document.getElementById('bdayInput').value;
+  if (bday) {
+    let settings = JSON.parse(localStorage.getItem('mukta_settings') || '{}');
+    settings.birthday = bday;
+    localStorage.setItem('mukta_settings', JSON.stringify(settings));
+    closeModal();
+    showToast("Birthday set! Bonus will be given on that day.", "success");
+    renderParent();
+  }
+};
+
+// ------------------------------------------------------------------
+// UI & INIT
+// ------------------------------------------------------------------
+function switchTab(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+  document.getElementById('tab-'+n).classList.add('active');
+  if(n==='tasks') renderTasks();
+  if(n==='rewards') renderRewards();
+  if(n==='history') renderProgress();
+  if(n==='parent') renderParent();
+}
+
+function updateHeader() {
+  let pts = weekPts();
+  let at = activeTasks();
+  document.getElementById('weekPts').textContent = pts;
+  let dm = at.filter(t => t.freq === 'daily').reduce((s,t) => s + t.pts, 0);
+  let pct = dm > 0 ? Math.min(100, Math.round(pts/(dm*7)*100)) : 0;
+  document.getElementById('weekBar').style.width = pct+'%';
+  let days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let now = new Date();
+  document.getElementById('headerDate').textContent = now.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  document.getElementById('weekLabel').textContent = days[now.getDay()]+' · '+pct+'%';
+  let done = todayDone().filter(e => e.p > 0 && !e.isRw);
+  let msgs = ['Ready to earn points today? 🌸','Keep going! 💪','You are amazing! ⭐','Super Mukta! 🌟','Fantastic work! 🎉','Way to go! 🚀'];
+  document.getElementById('headerSub').textContent = done.length===0 ? msgs[0] : msgs[Math.min(done.length, msgs.length-1)];
+}
+
+let toastTimeout;
+function showToast(msg,type) {
+  let t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show '+(type||'');
+  clearTimeout(toastTimeout); toastTimeout = setTimeout(() => t.className='toast', 3000);
+}
+function openM(title,sub,body) {
+  document.getElementById('mTitle').textContent = title;
+  document.getElementById('mSub').textContent = sub;
+  document.getElementById('mBody').innerHTML = body;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+function confetti() {
+  let cols = ['#7c3aed','#ec4899','#f59e0b','#16a34a','#0d9488','#3b82f6'];
+  for (let i=0;i<24;i++) {
+    let el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = 'left:'+(20+Math.random()*60)+'vw;top:-10px;background:'+cols[Math.floor(Math.random()*cols.length)]+';width:'+(6+Math.random()*8)+'px;height:'+(6+Math.random()*8)+'px;border-radius:'+(Math.random()>.5?'50%':'2px')+';animation-duration:'+(1+Math.random())+'s;animation-delay:'+(Math.random()*.3)+'s';
+    document.body.appendChild(el);
+    setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, 2000);
+  }
+}
+function renderAll() {
+  loadCollapsedState();
+  if (checkBirthday()) giveBirthdayBonus();
+  renderTasks(); updateHeader();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  renderAll();
+});
+</script>
+</body>
+</html>
