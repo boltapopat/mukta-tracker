@@ -1,4 +1,4 @@
-const { Blobs } = require('@netlify/blobs');
+const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -13,12 +13,12 @@ exports.handler = async (event) => {
       return { statusCode: 401, body: 'Unauthorized' };
     }
 
-    const store = new Blobs({ name: 'mukta-data' });
+    const store = getStore({ name: 'mukta-data' });
     await store.setJSON('user-data', data);
     
     return { statusCode: 200, body: 'Saved' };
   } catch (err) {
     console.error(err);
-    return { statusCode: 500, body: 'Internal Server Error' };
+    return { statusCode: 500, body: `Internal Server Error: ${err.message}` };
   }
 };
