@@ -257,7 +257,7 @@ const REWARDS = [
   { id: 'r10', icon: '🎉', name: 'Surprise party', cost: 300, cat: 'Experiences', desc: 'A special party with your friends!' },
   { id: 'r11', icon: '⭐', name: 'Big wishlist item', cost: 500, cat: 'Items & Gifts', desc: 'A special big item from your wishlist!' }
 ];
-
+const SYNC_SECRET = "justtimepass";
 // ------------------------------------------------------------------
 // Helper functions (standard)
 // ------------------------------------------------------------------
@@ -411,10 +411,21 @@ async function saveToCloud() {
     };
     await fetch('/.netlify/functions/save-data', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-Sync-Secret': SYNC_SECRET   // <-- uses the constant
+      },
       body: JSON.stringify({ data })
     });
   } catch (err) { console.warn('Auto-save error:', err); }
+}
+
+let saveTimeout;
+function debouncedSaveToCloud() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveToCloud();
+  }, 3000);
 }
 
 async function restoreFromCloud() {
@@ -972,7 +983,7 @@ window.checkParentPIN = function(cb) {
 function changeSeason(m) {
   setSeason(m);
   showToast(m==='vacation'?'☀️ Vacation Mode on!':'🏫 School Mode on!','success');
-  renderParent(); renderTasks(); updateHeader(); saveToCloud();
+  renderParent(); renderTasks(); updateHeader(); debouncedSaveToCloud();
 }
 function toggleTask(id) {
   let doneIds = new Set(todayDone().filter(e => !e.isRw && !e.isAdj && !e.isBonus).map(e => e.id));
@@ -981,7 +992,7 @@ function toggleTask(id) {
   } else {
     if (doComplete(id)) confetti();
   }
-  updateHeader(); renderTasks(); saveToCloud();
+  updateHeader(); renderTasks(); debouncedSaveToCloud();
 }
 function confirmRedeem(id) {
   let r = REWARDS.find(r => r.id === id);
@@ -991,7 +1002,7 @@ function confirmRedeem(id) {
 window.submitRedeem = function(id) {
   closeModal();
   let r = REWARDS.find(r => r.id === id);
-  if (doRedeem(id)) { confetti(); showToast('🎉 Redeemed: '+r.name+'! Enjoy!','success'); updateHeader(); renderRewards(); saveToCloud(); }
+  if (doRedeem(id)) { confetti(); showToast('🎉 Redeemed: '+r.name+'! Enjoy!','success'); updateHeader(); renderRewards(); debouncedSaveToCloud(); }
   else showToast('Not enough points!','error');
 };
 function showAdjust() {
@@ -1008,7 +1019,7 @@ window.submitAdjust = function() {
   x.s.w[x.wk].d[td].c.push({id:'adj_'+Date.now(), name:(v>0?'Parent bonus':'Parent adjustment'), icon:(v>0?'⭐':'📝'), p:v, t:Date.now(), isAdj:1});
   saveS(x.s); closeModal();
   showToast('Points '+(v>0?'added':'removed')+': '+Math.abs(v),'success');
-  updateHeader(); renderParent(); renderProgress(); saveToCloud();
+  updateHeader(); renderParent(); renderProgress(); debouncedSaveToCloud();
 };
 function confirmReset() {
   openM('🔄 Start New Week?','Mukta earned '+weekPts()+' points this week. A fresh week will begin.',
@@ -1021,12 +1032,111 @@ window.submitReset = function() {
   delete x.s.w[x.wk];
   saveS(x.s);
   showToast('🌟 New week started! Good luck Mukta!','success');
-  updateHeader(); renderAll(); saveToCloud();
+  updateHeader(); renderAll(); debouncedSaveToCloud();
 };
-function showAddTaskModal() { /* same as before – keep */ }
-function showTaskEditor() { /* same */ }
-function setBirthday() { /* same */ }
-function saveBirthday() { /* same */ }
+function showAddTaskModal() {
+  openM("➕ Add Custom Task", "Fill in details",
+    `<input id="newTaskName" class="modal-input" placeholder="Task name" style="margin-bottom:10px" />
+     <input id="newTaskPts" class="modal-input" placeholder="Points" type="number" style="margin-bottom:10px" />
+     <select id="newTaskFreq" class="modal-input" style="margin-bottom:10px"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="bonus">Bonus</option></select>
+     <select id="newTaskCat" class="modal-input" style="margin-bottom:10px"><option>Learning</option><option>Health & Wellness</option><option>Home Responsibilities</option><option>Good Habits</option><option>Personal Care</option><option>Music Practice</option><option>School Readiness</option><option>Studies & Reading</option></select>
+     <button class="modal-btn" onclick="addCustomTask()">Add Task</button>
+     <button class="modal-cancel" onclick="closeModal()">Cancel</button>`
+  );
+}
+
+function addCustomTask() {
+  let name = document.getElementById('newTaskName').value.trim();
+  let pts = parseInt(document.getElementById('newTaskPts').value);
+  let freq = document.getElementById('newTaskFreq').value;
+  let cat = document.getElementById('newTaskCat').value;
+  if (!name || isNaN(pts)) { showToast("Invalid input", "error"); return; }
+  let newId = 'c' + Date.now();
+  let newTask = { id:newId, icon:'✨', name:name, cat:cat, pts:pts, freq:freq, visible:true, timeGroup:'anytime' };
+  let tasks = getCustomTasks();
+  tasks.push(newTask);
+  saveCustomTasks(tasks);
+  closeModal();
+  showToast(`Task "${name}" added!`, "success");
+  renderTasks(); renderParent(); debouncedSaveToCloud();
+}
+
+function showTaskEditor() {
+  let tasks = getCustomTasks();
+  let html = `<div style="max-height:60vh;overflow-y:auto">`;
+  tasks.forEach(t => {
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;border-bottom:1px solid #eee;padding:6px 0">
+      <input type="checkbox" ${t.visible!==false?'checked':''} onchange="toggleTaskVisibility('${t.id}', this.checked)" />
+      <input type="text" value="${t.name}" id="ed_name_${t.id}" style="flex:1;font-size:13px;padding:4px" />
+      <input type="number" value="${t.pts}" id="ed_pts_${t.id}" style="width:60px;font-size:13px;padding:4px" />
+      <button class="redeem-btn" style="padding:4px 8px;font-size:12px" onclick="updateTask('${t.id}')">Save</button>
+      <button class="redeem-btn" style="background:#ef4444;padding:4px 8px;font-size:12px" onclick="deleteTask('${t.id}')">🗑️</button>
+    </div>`;
+  });
+  html += `</div><button class="modal-cancel" onclick="closeModal()">Close</button>`;
+  openM("Edit / Hide Tasks", "Check to show, uncheck to hide. Edit name/points and Save.", html);
+}
+
+window.toggleTaskVisibility = function(id, visible) {
+  let tasks = getCustomTasks();
+  let t = tasks.find(t => t.id === id);
+  if (t) t.visible = visible;
+  saveCustomTasks(tasks);
+  renderTasks(); renderParent(); debouncedSaveToCloud();
+};
+
+window.updateTask = function(id) {
+  let tasks = getCustomTasks();
+  let t = tasks.find(t => t.id === id);
+  if (t) {
+    let newName = document.getElementById(`ed_name_${id}`).value;
+    let newPts = parseInt(document.getElementById(`ed_pts_${id}`).value);
+    t.name = newName;
+    if (!isNaN(newPts)) t.pts = newPts;
+    saveCustomTasks(tasks);
+    showToast("Task updated", "success");
+    renderTasks(); renderParent(); debouncedSaveToCloud();
+  }
+};
+
+window.deleteTask = function(id) {
+  if (confirm("Delete this task? This cannot be undone.")) {
+    let tasks = getCustomTasks().filter(t => t.id !== id);
+    saveCustomTasks(tasks);
+    closeModal();
+    showToast("Task deleted", "success");
+    renderTasks(); renderParent(); debouncedSaveToCloud();
+  }
+};
+
+window.deleteTask = function(id) {
+  if (confirm("Delete this task? This cannot be undone.")) {
+    let tasks = getCustomTasks().filter(t => t.id !== id);
+    saveCustomTasks(tasks);
+    closeModal();
+    showToast("Task deleted", "success");
+    renderTasks(); renderParent(); debouncedSaveToCloud();
+  }
+};
+function setBirthday() {
+  openM("🎂 Birthday Bonus", "Select Mukta's birthday (once per year bonus of 50 points on that day)",
+    `<input type="date" id="bdayInput" class="modal-input" />
+     <button class="modal-btn" onclick="saveBirthday()">Save</button>
+     <button class="modal-cancel" onclick="closeModal()">Cancel</button>`
+  );
+}
+
+function saveBirthday() {
+  let bday = document.getElementById('bdayInput').value;
+  if (bday) {
+    let settings = JSON.parse(localStorage.getItem('mukta_settings') || '{}');
+    settings.birthday = bday;
+    localStorage.setItem('mukta_settings', JSON.stringify(settings));
+    closeModal();
+    showToast("Birthday set! Bonus will be given on that day.", "success");
+    renderParent(); debouncedSaveToCloud();
+  }
+}
 
 // ------------------------------------------------------------------
 // UI helpers

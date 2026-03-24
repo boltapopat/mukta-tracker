@@ -6,13 +6,22 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { data } = JSON.parse(event.body); // no secret needed
+    // Check secret header
+    const secretHeader = event.headers['x-sync-secret'];
+    const expectedSecret = process.env.SYNC_SECRET;
+
+    if (!secretHeader || secretHeader !== expectedSecret) {
+      console.log('Unauthorized attempt');
+      return { statusCode: 401, body: 'Unauthorized' };
+    }
+
+    const { data } = JSON.parse(event.body);
 
     const siteID = process.env.SITE_ID;
     const token = process.env.NETLIFY_BLOBS_ACCESS_TOKEN;
     if (!siteID || !token) {
       console.error('Missing siteID or token');
-      return { statusCode: 500, body: 'Missing site configuration' };
+      return { statusCode: 500, body: 'Server misconfiguration' };
     }
 
     const store = getStore({ name: 'mukta-data', siteID, token });
